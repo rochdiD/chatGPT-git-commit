@@ -14,8 +14,9 @@
       :out
       clojure.string/trim))
 
-(defn commit-file [file message]
-  (shell/sh "git" "commit" "-m" message file))
+(defn add-and-commit [file message]
+  (do (shell/sh "git" "add" file)
+      (shell/sh "git" "commit" "-m" message file)))
 
 (defn summarize-diff [file]
   (let [diff (get-diff file)
@@ -25,4 +26,4 @@
 
 (defn commit-new-and-modified-files []
   (doseq [file (list-new-and-modified-files)]
-    (commit-file file (summarize-diff file))))
+    (add-and-commit file (summarize-diff file))))
