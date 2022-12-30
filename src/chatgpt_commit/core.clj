@@ -2,10 +2,15 @@
   (:require [clojure.java.shell :as shell]
             [clj-http.client :as client]
             [clojure.data.json :as json]
-            [chatgpt.core :as chatgpt]))
+            [chatgpt-api.core :as chatgpt-api]))
 
-(defn list-new-and-modified-files []
-  (-> (shell/sh "git" "ls-files" "--others" "--modified")
+(defn list-untracked-files []
+  (-> (shell/sh "git" "ls-files" "--others" "--exclude-standard")
+      :out
+      (clojure.string/split-lines)))
+
+(defn list-not-staged-files []
+  (-> (shell/sh "git" "diff" "--name-only")
       :out
       (clojure.string/split-lines)))
 
@@ -20,10 +25,9 @@
 
 (defn summarize-diff [file]
   (let [diff (get-diff file)
-        prompt (str "Summarize the diff of this file: " diff)]
-    (-> (chatgpt/get-response prompt)
-        :message)))
-
-(defn commit-new-and-modified-files []
-  (doseq [file (list-new-and-modified-files)]
+        prompt (str "Suggest a detailed, technical and professional git message to this diff: " diff)]
+    (chatgpt-api/ask-chatgpt prompt)))
+    
+(defn commit-new-and-modified-files [list-of-files]
+  (doseq [file (list-of-files)]
     (add-and-commit file (summarize-diff file))))
