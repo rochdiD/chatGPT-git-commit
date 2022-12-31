@@ -1,8 +1,9 @@
 (ns chatgpt-api.core
   (:require [clj-http.client :as client]
-            [clojure.data.json :as json]))
+            [clojure.data.json :as json]
+            [clojure.java.io :as io]))
 
-(def api-key "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")
+(def api-key (slurp "APIKEY"))
 (def chatgpt-api-url "https://api.openai.com/v1/completions")
 
 (defn build-request-data [prompt]
