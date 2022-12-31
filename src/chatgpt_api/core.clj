@@ -8,31 +8,45 @@
 (defn build-request-data [prompt]
   {:model "text-davinci-003"
    :prompt prompt
-   :max_tokens 30
-   :temperature 0.3
+   :max_tokens 150
+   :temperature 0.2
    })
 
-(defn build-request-headers []
+(defn build-request-headers [api-key]
   {"Content-Type" "application/json"
    "Authorization" (str "Bearer " api-key)})
 
-(defn send-request [headers data]
-  (let [response (client/post chatgpt-api-url
-                              {:headers headers
-                               :body (json/write-str data)
-                               :as :string
-                               :socket-timeout 5000})]
-    (println (:body response) )
-    (:body response)))
+(defn post-to-api [url headers data]
+  (client/post url
+               {:headers headers
+                :body (json/write-str data)
+                :as :string
+                :socket-timeout 5000}))
+
+(defn read-body [response]
+  (:body response))
+
+(defn read-text [body]
+  ;;The text of the response is inside the first index of vector (as a value) of "choices" key 
+  (get
+    (get  
+      (get (json/read-str body) "choices") 0) "text"))
+
+(defn clean-text [text]
+  (clojure.string/replace text #"\n" ""))
+
 
 (defn ask-chatgpt [prompt]
-  (let [headers (build-request-headers)
-        data (build-request-data prompt)]
-    (send-request headers data)))
+  (let [headers (build-request-headers api-key)
+        data (build-request-data prompt)
+        url chatgpt-api-url ]
+      (clean-text
+        (read-text
+          (read-body
+            (post-to-api url headers data))))))
+            
 
 
-(defn -main []
-  (let [response (ask-chatgpt "What is the weather like today?")]
-    (println response)))
+
 
 
