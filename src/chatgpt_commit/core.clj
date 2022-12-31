@@ -19,15 +19,23 @@
       :out
       clojure.string/trim))
 
-(defn add-and-commit [file message]
+(defn git-add-and-commit [file message]
   (do (shell/sh "git" "add" file)
-      (shell/sh "git" "commit" "-m" message file)))
+      (shell/sh "git" "commit" "-m" message)))
 
-(defn summarize-diff [file]
-  (let [diff (get-diff file)
-        prompt (str "Suggest a detailed, technical and professional git message to this diff: " diff)]
+(defn summarize-diff [diff]
+  (let [prompt (str "Suggest a detailed, technical and professional git message to this diff, no need to start with 'Commit:': " diff)]
     (chatgpt-api/ask-chatgpt prompt)))
-    
+
+(defn commit-file [file]
+  (git-add-and-commit file (summarize-diff (get-diff file))))
+
 (defn commit-new-and-modified-files [list-of-files]
-  (doseq [file (list-of-files)]
-    (add-and-commit file (summarize-diff file))))
+  (for [file list-of-files]
+    (commit-file file)))
+
+(defn -main []
+  (do
+  (println "start")
+  (commit-new-and-modified-files (list-not-staged-files))
+  (println "end")))
