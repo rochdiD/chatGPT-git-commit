@@ -24,18 +24,17 @@
       (shell/sh "git" "commit" "-m" message)))
 
 (defn summarize-diff [diff]
-  (let [prompt (str "Suggest a detailed, technical and professional git message to this diff, no need to start with 'Commit:': " diff)]
+  (let [prompt (str "Suggest a detailed, technical and professional git message to this diff: " diff)]
     (chatgpt-api/ask-chatgpt prompt)))
 
 (defn commit-file [file]
   (git-add-and-commit file (summarize-diff (get-diff file))))
 
-(defn commit-new-and-modified-files [list-of-files]
-  (for [file list-of-files]
-    (commit-file file)))
+(defn commit-files [list-of-files]
+  (map commit-file list-of-files))
 
 (defn -main []
   (do
   (println "start")
-  (commit-new-and-modified-files (list-not-staged-files))
+  (commit-files (list-not-staged-files))
   (println "end")))
